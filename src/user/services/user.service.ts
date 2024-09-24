@@ -99,12 +99,14 @@ export class UserService {
     }
   }
 
-  async softDeleteUser(req:CustomRequest):Promise<ApiResponse>{
+  async softDeleteUser(req: CustomRequest): Promise<ApiResponse> {
     try {
       await this.userRepository.softDeleteUser(req.user.id);
-      return this.responseService.success(SUCCESS_MESSAGES.USER_DELETED_SUCCESSFULLY)
+      return this.responseService.success(
+        SUCCESS_MESSAGES.USER_DELETED_SUCCESSFULLY,
+      );
     } catch (error) {
-      return this.responseService.error(ERROR_MESSAGES.USER_UPDATE_FAILED)
+      return this.responseService.error(ERROR_MESSAGES.USER_UPDATE_FAILED);
     }
   }
 }
