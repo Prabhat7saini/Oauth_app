@@ -93,7 +93,7 @@ export class AdminRepository {
    */
   async getAllUsers(): Promise<User[] | string> {
     try {
-      const roleName = 'user';
+      const roleName = 'users';
       const role = await this.roleRepository.findOne({ where: { roleName } });
 
       if (!role) {

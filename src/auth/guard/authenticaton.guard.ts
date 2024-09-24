@@ -23,6 +23,7 @@ export class AuthenticationGuard implements CanActivate {
       }
 
       const payload = this.jwtService.verify(token, { secret: JWT_SECRET });
+      console.log(payload, 'Authentication successful');
       request.user = payload;
       return true;
     } catch (error) {

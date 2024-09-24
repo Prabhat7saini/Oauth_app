@@ -1,21 +1,26 @@
 import {
   Injectable,
   Logger,
-  BadRequestException,
   InternalServerErrorException,
   Req,
 } from '@nestjs/common';
-import { ChangePasswordDto, LoginDto, RegisterDto } from './dto/authDto';
+import {
+  ChangePasswordDto,
+  LoginDto,
+  RegisterDto,
+  RessetPasswordDto,
+} from './dto/authDto';
 import { ResponseService } from '../utils/responses/ResponseService';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '../utils/constants/message';
 import { ApiResponse } from '../utils/responses/api-response.dto';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-// import { AuthRepository } from './repo/auth.repository';
-
 import { CustomRequest } from '../utils/interface/type';
 import { UserService } from '../user/services/user.service';
+import { createForgotPasswordEmailBody } from '../utils/emailTemplates/resetPassword';
+import { createVerificationEmailBody } from '../utils/emailTemplates/sendOtp';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class AuthService {
@@ -27,6 +32,7 @@ export class AuthService {
     private readonly responseService: ResponseService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
+    private readonly emailService: EmailService,
     // private readonly authRepository: AuthRepository,
   ) {}
 
@@ -91,10 +97,10 @@ export class AuthService {
   }
 
   /**
-       * Logs in a user and generates an access token.
-       * loginData - The login credentials (email and password) for authentication.
-       * @returns An ApiResponse with the login result and access token if successful.
-      //  */
+         * Logs in a user and generates an access token.
+         * loginData - The login credentials (email and password) for authentication.
+         * @returns An ApiResponse with the login result and access token if successful.
+        //  */
   async login(loginData: LoginDto): Promise<ApiResponse> {
     try {
       const { email, password } = loginData;
@@ -131,16 +137,21 @@ export class AuthService {
         ...userWithoutSensitiveData
       } = existingUser;
 
-      const payload = {
+      const payloadAccessToken = {
         id: existingUser.id,
         role: existingUser.roles[0].roleName,
       };
-
-      const accessToken = await this.generateToken(payload, '60m');
+      const RefreshToken = await this.generateToken(
+        { id: existingUser.id },
+        '2d',
+      );
+      const accessToken = await this.generateToken(payloadAccessToken, '60m');
+      existingUser.refreshToken = RefreshToken;
+      await this.userService.saveUser(existingUser);
       return this.responseService.success(
         SUCCESS_MESSAGES.USER_LOGIN_SUCCESSFULLY,
         200,
-        { user: userWithoutSensitiveData, accessToken },
+        { user: userWithoutSensitiveData, accessToken, RefreshToken },
       );
     } catch (error) {
       // this.logger.error('Login failed', error.message, error.stack);
@@ -149,11 +160,11 @@ export class AuthService {
   }
 
   /**
-       * Generates a JWT token.
-       * @param payload - The payload to be encoded in the JWT token.
-       * @param expiresIn - The expiration time of the token (e.g., '60m').
-       * @returns The generated JWT token as a string.
-      //  */
+         * Generates a JWT token.
+         * @param payload - The payload to be encoded in the JWT token.
+         * @param expiresIn - The expiration time of the token (e.g., '60m').
+         * @returns The generated JWT token as a string.
+        //  */
   private async generateToken(
     payload: object,
     expiresIn: string,
@@ -175,49 +186,154 @@ export class AuthService {
    * @returns The change password response .
    */
 
-  // async changePassword(
-  //   @Req() req: CustomRequest,
-  //   changePasswordData: ChangePasswordDto,
-  // ): Promise<ApiResponse> {
-  //   const id = req.user.id;
+  async changePassword(
+    @Req() req: CustomRequest,
+    changePasswordData: ChangePasswordDto,
+  ): Promise<ApiResponse> {
+    try {
+      const id = req.user.id;
+      if (
+        changePasswordData.newPassword !== changePasswordData.confirmPassword
+      ) {
+        return this.responseService.error(
+          ERROR_MESSAGES.PASSWORDS_DO_NOT_MATCH,
+          400,
+        );
+      }
+      const existingUser = await this.userService.getUser({ id });
+      if (!existingUser) {
+        return this.responseService.error(ERROR_MESSAGES.USER_NOT_FOUND, 404);
+      }
 
-  //   try {
-  //     if (
-  //       changePasswordData.newPassword !== changePasswordData.confirmPassword
-  //     ) {
-  //       return this.responseService.error(
-  //         ERROR_MESSAGES.PASSWORDS_DO_NOT_MATCH,
-  //         400,
-  //       );
-  //     }
-  //     const existingUser = await this.userRepository.findUser({ id });
-  //     if (!existingUser) {
-  //       return this.responseService.error(ERROR_MESSAGES.USER_NOT_FOUND, 404);
-  //     }
+      const isOldPasswordValid = await bcrypt.compare(
+        changePasswordData.oldPassword,
+        existingUser.password,
+      );
+      if (!isOldPasswordValid) {
+        return this.responseService.error(
+          ERROR_MESSAGES.INVALID_OLD_PASSWORD,
+          400,
+        );
+      }
 
-  //     const isOldPasswordValid = await bcrypt.compare(
-  //       changePasswordData.oldPassword,
-  //       existingUser.password,
-  //     );
-  //     if (!isOldPasswordValid) {
-  //       return this.responseService.error(
-  //         ERROR_MESSAGES.INVALID_OLD_PASSWORD,
-  //         400,
-  //       );
-  //     }
+      const hashedPassword = await bcrypt.hash(
+        changePasswordData.newPassword,
+        12,
+      );
+      existingUser.password = hashedPassword;
 
-  //     const hashedPassword = await bcrypt.hash(
-  //       changePasswordData.newPassword,
-  //       12,
-  //     );
-  //     existingUser.password = hashedPassword;
+      await this.userService.saveUser(existingUser);
 
-  //     await this.userRepository.save(existingUser);
+      return this.responseService.success(SUCCESS_MESSAGES.PASSWORD_CHANGED);
+    } catch (error) {
+      console.error('Error changing password:', error);
+      return this.responseService.error(ERROR_MESSAGES.UNEXPECTED_ERROR, 500);
+    }
+  }
 
-  //     return this.responseService.success(SUCCESS_MESSAGES.PASSWORD_CHANGED);
-  //   } catch (error) {
-  //     // console.error('Error changing password:', error);
-  //     return this.responseService.error(ERROR_MESSAGES.UNEXPECTED_ERROR, 500);
-  //   }
-  // }
+  async refreshToken(req: CustomRequest): Promise<ApiResponse> {
+    try {
+      const id = req.user.id;
+      const existingUser = await this.userService.getUser({ id });
+      if (!existingUser) {
+        return this.responseService.error(ERROR_MESSAGES.USER_NOT_FOUND, 404);
+      }
+      if (!existingUser.isActive) {
+        return this.responseService.error(ERROR_MESSAGES.USER_INACTIVE, 400);
+      }
+      const payloadAccessToken = {
+        id: existingUser.id,
+        role: existingUser.roles[0].roleName,
+      };
+      const RefreshToken = await this.generateToken(
+        { id: existingUser.id },
+        '2d',
+      );
+      const accessToken = await this.generateToken(payloadAccessToken, '60m');
+      existingUser.refreshToken = RefreshToken;
+      await this.userService.saveUser(existingUser);
+      return this.responseService.success(
+        SUCCESS_MESSAGES.USER_LOGIN_SUCCESSFULLY,
+        200,
+        { accessToken, RefreshToken },
+      );
+    } catch (error) {}
+  }
+
+  async generateResetToken(email: string) {
+    try {
+      const existingUser = await this.userService.getUser({ email });
+      if (!existingUser) {
+        return this.responseService.error(ERROR_MESSAGES.USER_NOT_FOUND);
+      }
+      if (!existingUser.isActive) {
+        return this.responseService.error(ERROR_MESSAGES.USER_INACTIVE, 400);
+      }
+      const token = existingUser.id;
+      // existingUser.refreshToken = token;
+      existingUser.reSetPasswordExpires = new Date(Date.now() + 5 * 60 * 1000);
+      const url = `http://localhost:3000/update-password/${token}`;
+
+      // Todo send mail notification code
+      const htmlBody = createForgotPasswordEmailBody({ resetLink: url });
+      await this.emailService.sendMail(
+        existingUser.email,
+        'password forget link',
+        htmlBody,
+      );
+
+      await this.userService.saveUser(existingUser);
+      return this.responseService.success(
+        SUCCESS_MESSAGES.RESET_PASSWORD_TOKEN_GENERATED,
+        200,
+        { token },
+      );
+    } catch (error) {
+      this.logger.error(
+        'Error generating reset password token:',
+        error.message,
+      );
+      return this.responseService.error(
+        ERROR_MESSAGES.FAILD_REST_PASSWORD_TOKEN_GENERATED,
+      );
+    }
+  }
+
+  async resetPassword(
+    resetPasswordData: RessetPasswordDto,
+    id: string,
+  ): Promise<ApiResponse> {
+    try {
+      if (resetPasswordData.confirmPassword !== resetPasswordData.newPassword) {
+        return this.responseService.error(
+          ERROR_MESSAGES.PASSWORDS_DO_NOT_MATCH,
+        );
+      }
+      const existingUser = await this.userService.getUser({ id });
+      if (!existingUser) {
+        return this.responseService.error(ERROR_MESSAGES.USER_NOT_FOUND);
+      }
+      if (!existingUser.isActive) {
+        return this.responseService.error(ERROR_MESSAGES.USER_INACTIVE, 400);
+      }
+      if (existingUser.reSetPasswordExpires < new Date()) {
+        return this.responseService.error(
+          ERROR_MESSAGES.RESET_TOKEN_EXPIRED,
+          401,
+        );
+      }
+      const hashedPassword = await bcrypt.hash(
+        resetPasswordData.newPassword,
+        12,
+      );
+      existingUser.password = hashedPassword;
+
+      await this.userService.saveUser(existingUser);
+
+      return this.responseService.success(SUCCESS_MESSAGES.PASSWORD_CHANGED);
+    } catch (error) {
+      this.logger.debug(error.message);
+      return this.responseService.error(ERROR_MESSAGES.RESETPASSWORD_FAILD);
+    }
+  }
 }

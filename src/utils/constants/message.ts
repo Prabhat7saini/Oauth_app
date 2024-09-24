@@ -37,6 +37,10 @@ export const ERROR_MESSAGES = {
   ACCESS_DENIED: 'you do not have access to this route',
   PERMISSION_ALREADY_EXISTENT: 'Permission already exists',
   PERMISSION_CREATION_FAILED: 'Permission CREATION Failed',
+  FAILD_REST_PASSWORD_TOKEN_GENERATED:
+    'Something went wrong while sending reset pwd mail',
+  RESET_TOKEN_EXPIRED: 'token expired',
+  RESETPASSWORD_FAILD: 'Reset password failed',
 };
 
 export const SUCCESS_MESSAGES = {
@@ -55,4 +59,6 @@ export const SUCCESS_MESSAGES = {
   PERMISSION_FETCHED_SUCCESSFULLY: 'Permission successfully fetched',
   PERMISSIONS_FETCHED_SUCCESSFULLY: 'Permissions successfully fetched',
   PERMISSION_DELETED_SUCCESSFULLY: 'Permission successfully deleted',
+  RESET_PASSWORD_TOKEN_GENERATED:
+    '`Email sent successfully,Please check email and changes password`',
 };

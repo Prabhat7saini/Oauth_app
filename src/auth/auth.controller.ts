@@ -1,9 +1,17 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AdminSignUpDto, LoginDto, RegisterDto } from './dto/authDto';
+import {
+  AdminSignUpDto,
+  ChangePasswordDto,
+  LoginDto,
+  RegisterDto,
+  RessetPasswordDto,
+} from './dto/authDto';
 import { ApiResponse } from '../utils/responses/api-response.dto';
 import { ResponseService } from '../utils/responses/ResponseService';
 import { ERROR_MESSAGES } from 'src/utils/constants/message';
+import { AuthenticationGuard } from './guard/authenticaton.guard';
+import { CustomRequest } from '../utils/interface/type';
 
 @Controller({ path: 'auth', version: '1' })
 export class AuthController {
@@ -31,5 +39,33 @@ export class AuthController {
   @Post('/login')
   async login(@Body() loginData: LoginDto): Promise<ApiResponse> {
     return this.authService.login(loginData);
+  }
+  @UseGuards(AuthenticationGuard)
+  @Post('/changePassword')
+  async changePassword(
+    @Req() req: CustomRequest,
+    @Body() changePasswordData: ChangePasswordDto,
+  ): Promise<ApiResponse> {
+    return await this.authService.changePassword(req, changePasswordData);
+  }
+
+  @UseGuards(AuthenticationGuard)
+  @Post(`refreshToken`)
+  async refreshToken(@Req() req: CustomRequest): Promise<ApiResponse> {
+    return await this.authService.refreshToken(req);
+  }
+
+  // Generate reset token for password reset functionality
+  @Post(`reset-password-token`)
+  async generateResetToken(@Body('email') email: string): Promise<ApiResponse> {
+    return await this.authService.generateResetToken(email);
+  }
+
+  @Post(':id/reset-password')
+  async resetPassword(
+    @Body() resetPasswordData: RessetPasswordDto,
+    @Param('id') id: string,
+  ): Promise<ApiResponse> {
+    return await this.authService.resetPassword(resetPasswordData, id);
   }
 }

@@ -71,3 +71,16 @@ export class ChangePasswordDto {
   @IsNotEmpty({ message: 'Confirm password is required' })
   confirmPassword: string;
 }
+
+export class RessetPasswordDto {
+  @IsString({ message: 'New password must be a string' })
+  @IsNotEmpty({ message: 'New password is required' })
+  @IsPasswordComplex({
+    message:
+      'Password must contain at least one uppercase letter, one lowercase letter, one number, one special character, and be at least 8 characters long',
+  })
+  newPassword: string;
+  @IsString({ message: 'Confirm password must be a string' })
+  @IsNotEmpty({ message: 'Confirm password is required' })
+  confirmPassword: string;
+}

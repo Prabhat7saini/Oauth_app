@@ -28,6 +28,8 @@ export class UserRepository {
   //  Finds a user by email or ID.
   async findUser({ email, id }: FindUser): Promise<User | null> {
     // Ensure either email or id is provided
+
+    console.log(id, 'findUser');
     if (!email && !id) {
       throw new Error(ERROR_MESSAGES.REQUIRED_ID_OR_EMAIL);
     }
@@ -114,44 +116,6 @@ export class UserRepository {
   }
 
   /**
-   * Creates a new admin with the given data.
-   *  adminData - The data for the admin to be created.
-   * @returns The created admin entity.
-   */
-  async createAdmin(adminData: SignUpDto): Promise<User> {
-    const roleName = 'admin';
-    try {
-      // Find the role entity for 'admin'
-      const roleEntity = await this.roleRepository.findOne({
-        where: { roleName },
-      });
-      if (!roleEntity) {
-        // this.logger.warn(`Role '${roleName}' does not exist.`);
-        throw new BadRequestException('Role does not exist');
-      }
-
-      // Hash the admin password before saving
-      const hashedPassword = await bcrypt.hash(
-        adminData.password,
-        this.saltRounds,
-      );
-
-      // Create and save the new admin
-      const user = this.userRepository.create({
-        ...adminData,
-        password: hashedPassword,
-        roles: [roleEntity],
-      });
-      return await this.userRepository.save(user);
-    } catch (error) {
-      // this.logger.error('Admin creation failed', error.message, error.stack);
-      throw new InternalServerErrorException(
-        ERROR_MESSAGES.USER_CREATION_FAILED,
-      );
-    }
-  }
-
-  /**
    * Updates a user's details.
    * @param {string} id - ID of the user to update.
    * userData - Data to update the user with.
@@ -162,25 +126,6 @@ export class UserRepository {
     userData: UpdateUserDto,
   ): Promise<User | string> {
     try {
-      const user = await this.findUser({ id });
-
-      if (!user.isActive) {
-        // this.logger.warn(
-        //   `You are not update the user details because the user are not active`,
-        // );
-        return ERROR_MESSAGES.NOT_ALLOWED_TO_UPDATE_INACTIVE_USER;
-      }
-      if (!user) {
-        // this.logger.warn(
-        //   `inside the update by admin User with ID ${id} not found.`,
-        // );
-        return ERROR_MESSAGES.USER_NOT_FOUND;
-      }
-      if (user.roles[0].roleName === 'admin') {
-        // this.logger.warn(`Update not allowed for admin user `);
-        return ERROR_MESSAGES.ADMIN_UPDATE_NOT_ALLOWED;
-      }
-
       await this.userRepository.update(id, userData);
 
       const updatedUser = await this.findUser({ id });
@@ -213,6 +158,15 @@ export class UserRepository {
     } catch (error) {
       console.error('Error during soft delete operation:', error);
       return false;
+    }
+  }
+
+  async saveUser(user: User): Promise<User> {
+    try {
+      return await this.userRepository.save(user);
+    } catch (error) {
+      console.error('Error during user save operation:', error);
+      throw new InternalServerErrorException(error.message);
     }
   }
 }

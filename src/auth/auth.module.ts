@@ -7,10 +7,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { AuthenticationGuard } from './guard/authenticaton.guard';
 import { AuthorizationGuard } from './guard/authorization.guard';
+import { EmailModule } from 'src/email/email.module';
 
 @Module({
   imports: [
     UserModule,
+    EmailModule,
     ConfigModule.forRoot(), // Ensure ConfigModule is imported
     JwtModule.registerAsync({
       imports: [ConfigModule],
