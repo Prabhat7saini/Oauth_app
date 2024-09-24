@@ -21,7 +21,7 @@ import { JwtService } from '@nestjs/jwt';
     AdminRepository,
     ResponseService,
     AdminService,
-    JwtService
+    JwtService,
   ],
   exports: [UserService],
 })

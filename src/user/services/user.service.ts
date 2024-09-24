@@ -39,7 +39,7 @@ export class UserService {
     }
   }
 
-  async getRole({roleName,roleId}: IfindROle): Promise<Role> {
+  async getRole({ roleName, roleId }: IfindROle): Promise<Role> {
     try {
       console.log(`getRole ${roleName}`);
       const role = await this.userRepository.findRole({ roleName });

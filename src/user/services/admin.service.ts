@@ -28,7 +28,7 @@ export class AdminService {
    * @returns ApiResponse - Response indicating the success or failure of the operation.
    */
   async createRoles(roleName: string): Promise<ApiResponse> {
-    const role = await this.userService.getRole({roleName});
+    const role = await this.userService.getRole({ roleName });
     console.log(role, 'role');
     if (role) {
       return this.responseService.error(ERROR_MESSAGES.ROLE_ALREADY_EXISTS);
@@ -199,9 +199,9 @@ export class AdminService {
     permissionIds: string[],
   ): Promise<void> {
     const id = roleId;
-    console.log(roleId)
-    const role = await this.userService.getRole({roleId});
-    console.log(role,"assignPermissions")
+    console.log(roleId);
+    const role = await this.userService.getRole({ roleId });
+    console.log(role, 'assignPermissions');
     if (!role) {
       throw new NotFoundException(`Role with ID ${roleId} not found`);
     }

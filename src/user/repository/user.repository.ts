@@ -23,7 +23,7 @@ export class UserRepository {
     private userRepository: Repository<User>,
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
-  ) { }
+  ) {}
 
   //  Finds a user by email or ID.
   async findUser({ email, id }: FindUser): Promise<User | null> {
@@ -62,8 +62,13 @@ export class UserRepository {
       }
     }
   }
-  async findRole({ roleName, roleId }: { roleName?: string; roleId?: string }): Promise<Role | null> {
-
+  async findRole({
+    roleName,
+    roleId,
+  }: {
+    roleName?: string;
+    roleId?: string;
+  }): Promise<Role | null> {
     const query: {
       where: { roleName?: string; id?: string };
       relations: string[];
@@ -92,7 +97,6 @@ export class UserRepository {
       }
     }
   }
-
 
   async register(userData: SignUpDto, role: Role): Promise<void> {
     try {
@@ -190,7 +194,7 @@ export class UserRepository {
     }
   }
 
-  async softDeleteUser(id: string): Promise<Boolean> {
+  async softDeleteUser(id: string): Promise<boolean> {
     try {
       // Execute the soft delete by updating the `deletedAt` field
       const result = await this.userRepository

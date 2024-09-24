@@ -22,7 +22,13 @@ import { AuthorizationGuard } from './guard/authorization.guard';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, ResponseService, JwtService, AuthenticationGuard,AuthorizationGuard],
-  exports:[AuthenticationGuard,AuthorizationGuard]
+  providers: [
+    AuthService,
+    ResponseService,
+    JwtService,
+    AuthenticationGuard,
+    AuthorizationGuard,
+  ],
+  exports: [AuthenticationGuard, AuthorizationGuard],
 })
 export class AuthModule {}

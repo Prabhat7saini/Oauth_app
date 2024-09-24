@@ -32,27 +32,11 @@
 //     }
 // }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import {
-    CanActivate,
-    ExecutionContext,
-    ForbiddenException,
-    Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
@@ -61,32 +45,35 @@ import { ERROR_MESSAGES } from '../../utils/constants/message';
 
 @Injectable()
 export class AuthorizationGuard implements CanActivate {
-    constructor(private readonly reflector: Reflector) { }
+  constructor(private readonly reflector: Reflector) {}
 
-    canActivate(
-        context: ExecutionContext,
-    ): boolean | Promise<boolean> | Observable<boolean> {
-        try {
-            const request = context.switchToHttp().getRequest();
-            const requiredRoles = this.reflector.get<string[]>(ROLES_KEY, context.getHandler());
-            console.log(requiredRoles, "inside the authorization requiredrole")
+  canActivate(
+    context: ExecutionContext,
+  ): boolean | Promise<boolean> | Observable<boolean> {
+    try {
+      const request = context.switchToHttp().getRequest();
+      const requiredRoles = this.reflector.get<string[]>(
+        ROLES_KEY,
+        context.getHandler(),
+      );
+      console.log(requiredRoles, 'inside the authorization requiredrole');
 
-            if (!requiredRoles) {
-                return true; // If no roles are required, allow access
-            }
+      if (!requiredRoles) {
+        return true; // If no roles are required, allow access
+      }
 
-            const userRole = request.user.role; // Assuming user.role is a single string
-            console.log(userRole, "inside the authorization userRole")
-            // Check if the user has one of the required roles
-            const hasRole = requiredRoles.includes(userRole);
+      const userRole = request.user.role; // Assuming user.role is a single string
+      console.log(userRole, 'inside the authorization userRole');
+      // Check if the user has one of the required roles
+      const hasRole = requiredRoles.includes(userRole);
 
-            if (!hasRole) {
-                throw new ForbiddenException(ERROR_MESSAGES.ACCESS_DENIED);
-            }
+      if (!hasRole) {
+        throw new ForbiddenException(ERROR_MESSAGES.ACCESS_DENIED);
+      }
 
-            return true;
-        } catch (error) {
-            throw error; // Rethrow the error to be handled by NestJS
-        }
+      return true;
+    } catch (error) {
+      throw error; // Rethrow the error to be handled by NestJS
     }
+  }
 }
