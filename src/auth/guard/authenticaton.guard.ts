@@ -14,7 +14,7 @@ export class AuthenticationGuard implements CanActivate {
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
     try {
-      // console.log(`in side the authentication guard service`)
+      console.log(`in side the authentication guard service`);
       const JWT_SECRET = this.config.get<string>('JWT_SECRET');
       const request = context.switchToHttp().getRequest();
       const token = request.headers.authorization?.split(' ')[1];

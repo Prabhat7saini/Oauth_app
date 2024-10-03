@@ -8,6 +8,7 @@ import { JwtModule, JwtService } from '@nestjs/jwt';
 import { AuthenticationGuard } from './guard/authenticaton.guard';
 import { AuthorizationGuard } from './guard/authorization.guard';
 import { EmailModule } from 'src/email/email.module';
+import { WsAuthenticationGuard } from './guard/wsauthentication.guard';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { EmailModule } from 'src/email/email.module';
     JwtService,
     AuthenticationGuard,
     AuthorizationGuard,
+    WsAuthenticationGuard,
   ],
   exports: [AuthenticationGuard, AuthorizationGuard],
 })
