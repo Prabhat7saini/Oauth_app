@@ -1,18 +1,19 @@
 import { Module, Global } from '@nestjs/common';
-import Redis from 'ioredis'; // Import the default export
+import Redis from 'ioredis';
 import { CacheController } from './redis.controller';
 import { RedisService } from './redis.service';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Global()
 @Module({
+  imports: [ConfigModule], // Import ConfigModule
   providers: [
     {
       provide: 'REDIS_CLIENT',
-      useFactory: () => {
+      useFactory: (configService: ConfigService) => {
         const redis = new Redis({
-          host: 'localhost', // Redis host
-          port: 6379, // Redis port
-          // password: 'your-password', // Uncomment if Redis is password protected
+          host: configService.get<string>('REDIS_HOST'),
+          port: configService.get<number>('REDIS_PORT'),
         });
 
         redis.on('error', (err) => {
@@ -21,10 +22,11 @@ import { RedisService } from './redis.service';
 
         return redis;
       },
+      inject: [ConfigService], // Specify ConfigService as a dependency
     },
     RedisService,
   ],
   controllers: [CacheController],
   exports: ['REDIS_CLIENT'],
 })
-export class RedisModule {}
+export class RedisModule { }

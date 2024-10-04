@@ -1,0 +1,33 @@
+version: '3.8'
+services:
+  database:
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: P1R2a3#4
+      POSTGRES_DB: Chats
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - database
+      - redis
+    ports:
+      - "3000:3000"
+
+
+# version: '3.8'
+# services:
+#   redis:
+#     image: redis
+#     ports:
+#       - "6379:6379"
