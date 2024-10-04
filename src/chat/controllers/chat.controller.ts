@@ -1,72 +1,67 @@
-import { MessagePattern, Payload } from '@nestjs/microservices';
-import { ApiResponse } from 'src/utils/responses/api-response.dto';
+import { ApiResponse } from '../../utils/responses/api-response.dto';
 import { ChatService } from '../services/chat.service';
 import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
-import { AuthenticationGuard } from 'src/auth/guard/authenticaton.guard';
-import { Request } from 'express';
+import { AuthenticationGuard } from '../../auth/guard/authenticaton.guard';
 import { CustomRequest } from '../../utils/interface/type';
-import { User } from 'src/user/entities/user.entity';
-import { useLayoutEffect } from 'react';
-
-class PayloadDataDto {
-  currentUserId: string;
-  receiverId: string;
-}
-
-class payloadDataDto {
-  text: string;
-  currentUserId: string;
-  chatId: string;
-}
+import { MessageDataDto } from '../dto/chatDto';
+import { ResponseService } from '../../utils/responses/ResponseService';
 
 @Controller({ path: 'chat', version: '1' })
 export class ChatController {
-  constructor(private readonly chatService: ChatService) {}
+  constructor(
+    private readonly chatService: ChatService,
+    private readonly responseService: ResponseService,
+  ) {}
 
-  // @MessagePattern({ cmd: 'get_chats' })
-
-  // @Post('/getchats')
-  // async getChats(@Body() PayloadData: PayloadDataDto): Promise<ApiResponse> {
-  //   console.log('enter the access chat api', PayloadData);
-  //   return this.chatService.accessChat(
-  //     PayloadData.currentUserId,
-  //     PayloadData.receiverId,
-  //   );
-  // }
-
-  // @MessagePattern({ cmd: 'send_message' })
   @UseGuards(AuthenticationGuard)
   @Post('/createChat')
   async createChat(
     @Body('receiverId') receiverId: string,
     @Req() req: CustomRequest,
   ): Promise<ApiResponse> {
-    return this.chatService.accessChat(req.user.id, receiverId);
+    try {
+      const userId = req.user.id;
+      return await this.chatService.accessChat(userId, receiverId);
+    } catch (error) {
+      return this.responseService.error('Failed to create chat', error);
+    }
   }
 
   @Post('/send_message')
-  async sendMessage(@Body() payloadData: payloadDataDto): Promise<ApiResponse> {
-    console.log(payloadData);
-    return await this.chatService.sendMessage(
-      payloadData.text,
-      payloadData.currentUserId,
-      payloadData.chatId,
-    );
+  async sendMessage(@Body() messageData: MessageDataDto): Promise<ApiResponse> {
+    try {
+      return await this.chatService.sendMessage(
+        messageData.text,
+        messageData.currentUserId,
+        messageData.chatId,
+      );
+    } catch (error) {
+      return this.responseService.error('Failed to send message', error); // Use the response service
+    }
   }
 
   @UseGuards(AuthenticationGuard)
-  @Post(`/createGroup`)
+  @Post('/createGroup')
   async createGroupChat(
     @Body('usersId') usersId: string[],
     @Body('groupName') groupName: string,
     @Req() req: CustomRequest,
   ): Promise<ApiResponse> {
-    usersId.push(req.user.id);
-    return await this.chatService.createGroupChat(usersId, groupName);
+    try {
+      usersId.push(req.user.id); // Add the current user to the group
+      return await this.chatService.createGroupChat(usersId, groupName);
+    } catch (error) {
+      return this.responseService.error('Failed to create group chat', error);
+    }
   }
+
   @UseGuards(AuthenticationGuard)
   @Get('/getChats')
   async getChats(@Req() req: CustomRequest): Promise<ApiResponse> {
-    return await this.chatService.getChats(req.user.id);
+    try {
+      return await this.chatService.getChats(req.user.id);
+    } catch (error) {
+      return this.responseService.error('Failed to retrieve chats', error);
+    }
   }
 }
