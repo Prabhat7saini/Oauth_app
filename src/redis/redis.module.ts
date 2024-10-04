@@ -29,4 +29,4 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
   controllers: [CacheController],
   exports: ['REDIS_CLIENT'],
 })
-export class RedisModule { }
+export class RedisModule {}

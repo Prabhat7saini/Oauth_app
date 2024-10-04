@@ -15,22 +15,23 @@ import { SocketAuthMiddleware } from './ws.middleware';
 
 @WebSocketGateway({
   cors: {
-    origin: '*', 
+    origin: '*',
   },
 })
 @UseGuards(WsAuthenticationGuard) // Protect the WebSocket gateway with authentication
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+  private limit = 50;
   @WebSocketServer() server: Server;
   private logger: Logger = new Logger('ChatGateway');
 
-  constructor(private chatService: ChatService) { }
+  constructor(private chatService: ChatService) {}
 
   // Tracks user connection statuses
   private userStatus: { [userId: string]: boolean } = {};
 
   afterInit(client: Socket) {
     this.logger.log('Initialized WebSocket Gateway');
-    client.use(SocketAuthMiddleware() as any); 
+    client.use(SocketAuthMiddleware() as any);
   }
 
   handleConnection(client: Socket) {
@@ -44,7 +45,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const userId = client.handshake.auth.user.id; // Get user ID from handshake
     this.userStatus[userId] = false; // Set user as offline
     this.logger.log(`User ${userId} disconnected`);
-    client.broadcast.emit('userStatusUpdate', { userId, status: 'offline' }); 
+    client.broadcast.emit('userStatusUpdate', { userId, status: 'offline' });
   }
 
   @SubscribeMessage('joinRoom')
@@ -68,7 +69,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
 
     // Send existing messages to the user
-    const messageHistory = await this.chatService.getMessageHistory(chatId, 1, 5); // Fetch messages
+    const messageHistory = await this.chatService.getMessageHistory(
+      chatId,
+      1,
+      this.limit,
+    ); // Fetch messages
     client.emit('existingMessages', messageHistory);
   }
 
@@ -77,10 +82,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { chatId: string; message: string },
     @ConnectedSocket() client: Socket,
   ) {
-    const { chatId, message,  } = data;
-    const senderId=client.handshake.auth.user.id;
-    console.log(senderId, "   ", chatId, "   ",message);
-    const sentMessage = await this.chatService.sendMessage(message, senderId, chatId);
+    const { chatId, message } = data;
+    const senderId = client.handshake.auth.user.id;
+    console.log(senderId, '   ', chatId, '   ', message);
+    const sentMessage = await this.chatService.sendMessage(
+      message,
+      senderId,
+      chatId,
+    );
     this.logger.log(`Message from ${senderId} to room ${chatId}: ${message}`);
 
     // Emit the new message to the specific room
@@ -93,8 +102,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
   ) {
     const { chatId, page } = data;
-    const messages = await this.chatService.getMessageHistory(chatId, page, 5); 
+    const messages = await this.chatService.getMessageHistory(
+      chatId,
+      page,
+      this.limit,
+    );
     client.emit('moreMessages', { messages });
   }
-
 }

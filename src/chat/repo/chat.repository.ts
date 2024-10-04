@@ -11,7 +11,7 @@ export class ChatRepository {
     private readonly chatRepository: Repository<Chat>,
     @InjectRepository(Message)
     private readonly messageRepository: Repository<Message>,
-  ) { }
+  ) {}
 
   /**
    * Access an existing chat between the current user and the receiver.
@@ -30,7 +30,9 @@ export class ChatRepository {
       // console.log('Accessing chat', currentUserId, receiverId);
 
       // Check if a chat already exists between the two users
-      const chat = await this.chatRepository.findOne({ where: { chatName: `${currentUserId}-${receiverId}` } });
+      const chat = await this.chatRepository.findOne({
+        where: { chatName: `${currentUserId}-${receiverId}` },
+      });
 
       if (chat) {
         return { Chat: chat }; // Return the existing chat
@@ -107,10 +109,11 @@ export class ChatRepository {
       skip: (page - 1) * limit,
       take: limit,
     });
-    console.log(`Fetched message history for chat ${chatId}, total messages: ${total}`);
+    console.log(
+      `Fetched message history for chat ${chatId}, total messages: ${total}`,
+    );
     return { messages, total };
   }
-
 
   async createGroupChat(usersId: string[], groupName: string): Promise<Chat> {
     try {
@@ -124,13 +127,11 @@ export class ChatRepository {
 
       await this.chatRepository.save(newChat);
       return newChat;
-
     } catch (error) {
       console.error('Error creating group chat:', error.message);
       throw new Error(`Could not create group chat: ${error.message}`);
     }
   }
-
 
   async getChats(userId: string): Promise<Chat[]> {
     try {
@@ -149,5 +150,4 @@ export class ChatRepository {
       return [];
     }
   }
-
 }

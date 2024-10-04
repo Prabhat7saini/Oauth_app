@@ -11,7 +11,7 @@ export class ChatService {
   constructor(
     private readonly chatRepository: ChatRepository,
     private readonly responseService: ResponseService,
-  ) { }
+  ) {}
 
   async accessChat(
     currentUserId: string,
@@ -32,13 +32,15 @@ export class ChatService {
       //   200,
       //   chat,
       // );
-      return this.responseService.success(`chat fetch successfully`,201,chat);
+      return this.responseService.success(`chat fetch successfully`, 201, chat);
     } catch (error) {
       console.log(`error while fetching chat #${error.message}`);
       // return this.responseService.error(
       //   'An error occurred while fetching the chat',
       // );
-      return this.responseService.error(`An error occurred while fetching the chat`);
+      return this.responseService.error(
+        `An error occurred while fetching the chat`,
+      );
     }
   }
 
@@ -72,15 +74,12 @@ export class ChatService {
     }
   }
 
-
-
   async getMessageHistory(
     chatId: string,
     page: number = 1,
     limit: number = 50,
   ): Promise<ApiResponse> {
     try {
-
       if (!chatId) {
         return this.responseService.error('chatId is needed to fetch messages');
       }
@@ -89,34 +88,48 @@ export class ChatService {
         page,
         limit,
       );
-      return this.responseService.success(`message successfully fetch on  ${page}`, 200, history);
+      return this.responseService.success(
+        `message successfully fetch on  ${page}`,
+        200,
+        history,
+      );
     } catch (error) {
-      return this.responseService.error(`error fetching message`)
+      return this.responseService.error(`error fetching message`);
     }
   }
 
-  async createGroupChat(usersId: string[], groupName: string): Promise<ApiResponse> {
+  async createGroupChat(
+    usersId: string[],
+    groupName: string,
+  ): Promise<ApiResponse> {
     try {
-      console.log(usersId.length, "i")
+      console.log(usersId.length, 'i');
 
       if (usersId.length < 2) {
         // console.log(typeof usersId.length,"")
-        return this.responseService.error(`minimum 3 users are required to create a group chat`)
+        return this.responseService.error(
+          `minimum 3 users are required to create a group chat`,
+        );
       }
 
       if (!groupName) {
         return this.responseService.error('Group name is required.');
       }
-      const group = await this.chatRepository.createGroupChat(usersId, groupName)
+      const group = await this.chatRepository.createGroupChat(
+        usersId,
+        groupName,
+      );
 
-      return this.responseService.success(`Group created successfully`, 201, group)
+      return this.responseService.success(
+        `Group created successfully`,
+        201,
+        group,
+      );
     } catch (error) {
-      console.log(`Error creating group`)
-      this.responseService
-        .error(error.message)
+      console.log(`Error creating group`);
+      this.responseService.error(error.message);
     }
   }
-
 
   //@description     Fetch all chats for a user
   //@route           GET /api/chat/
@@ -124,8 +137,12 @@ export class ChatService {
   async getChats(userId: string): Promise<ApiResponse> {
     try {
       console.log('Get chats for user', userId);
-      const chats = await this.chatRepository.getChats(userId)
-      return this.responseService.success(`successfully fetched chats for user`, 201, chats);
+      const chats = await this.chatRepository.getChats(userId);
+      return this.responseService.success(
+        `successfully fetched chats for user`,
+        201,
+        chats,
+      );
     } catch (error) {
       console.log(`Error fetching chats for user ${userId}`, error);
       this.responseService.error(`error fetching chats for user ${userId}`);

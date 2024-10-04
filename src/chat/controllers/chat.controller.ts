@@ -21,7 +21,7 @@ class payloadDataDto {
 
 @Controller({ path: 'chat', version: '1' })
 export class ChatController {
-  constructor(private readonly chatService: ChatService) { }
+  constructor(private readonly chatService: ChatService) {}
 
   // @MessagePattern({ cmd: 'get_chats' })
 
@@ -37,8 +37,11 @@ export class ChatController {
   // @MessagePattern({ cmd: 'send_message' })
   @UseGuards(AuthenticationGuard)
   @Post('/createChat')
-  async createChat(@Body('receiverId') receiverId: string, @Req() req: CustomRequest): Promise<ApiResponse> {
-    return this.chatService.accessChat(req.user.id, receiverId)
+  async createChat(
+    @Body('receiverId') receiverId: string,
+    @Req() req: CustomRequest,
+  ): Promise<ApiResponse> {
+    return this.chatService.accessChat(req.user.id, receiverId);
   }
 
   @Post('/send_message')
@@ -56,9 +59,9 @@ export class ChatController {
   async createGroupChat(
     @Body('usersId') usersId: string[],
     @Body('groupName') groupName: string,
-    @Req() req: CustomRequest
+    @Req() req: CustomRequest,
   ): Promise<ApiResponse> {
-    usersId.push(req.user.id)
+    usersId.push(req.user.id);
     return await this.chatService.createGroupChat(usersId, groupName);
   }
   @UseGuards(AuthenticationGuard)
