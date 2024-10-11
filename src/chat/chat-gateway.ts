@@ -37,7 +37,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handleConnection(client: Socket) {
     const userId = client.handshake.auth.user.id; // Get user ID from handshake
     this.userStatus[userId] = true; // Set user as online
-    this.logger.log(`New user connected: ${userId}`);
+    this.logger.log(`New user connected: ${userId} online`);
     client.broadcast.emit('userStatusUpdate', { userId, status: 'online' }); // Notify others
   }
 
@@ -74,7 +74,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       1,
       this.limit,
     ); // Fetch messages
-    client.emit('existingMessages', messageHistory);
+    client.emit('existingMessages', messageHistory.data);
   }
 
   @SubscribeMessage('sendMessage')
@@ -93,7 +93,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.log(`Message from ${senderId} to room ${chatId}: ${message}`);
 
     // Emit the new message to the specific room
-    this.server.to(chatId).emit('receiveMessage', { sentMessage, senderId });
+    this.server.to(chatId).emit('receiveMessage', sentMessage.data);
   }
 
   @SubscribeMessage('loadMoreMessages')
@@ -108,5 +108,34 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.limit,
     );
     client.emit('moreMessages', { messages });
+  }
+
+
+
+  @SubscribeMessage('uploadPdf')
+  async handleUploadUloadPdf(
+    @MessageBody() data: { chatId: string; pdf: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const { chatId, pdf } = data;
+    const senderId = client.handshake.auth.user.id;
+
+    this.logger.log(`pdf from ${senderId} to room ${chatId}: [pdf Data]`);
+console.log(pdf,"pdf")
+    // Emit the uploaded image to the specific room
+    this.server.to(chatId).emit('pdfUploaded', { senderId, pdf });
+  }
+  @SubscribeMessage('uploadImage')
+  async handleUploadImage(
+    @MessageBody() data: { chatId: string; image: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const { chatId, image } = data;
+    const senderId = client.handshake.auth.user.id;
+
+    this.logger.log(`Image from ${senderId} to room ${chatId}: [Image Data]`);
+    console.log(image, "image")
+    // Emit the uploaded image to the specific room
+    this.server.to(chatId).emit('imageUploaded', { senderId, image });
   }
 }

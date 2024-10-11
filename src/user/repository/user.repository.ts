@@ -169,4 +169,21 @@ export class UserRepository {
       throw new InternalServerErrorException(error.message);
     }
   }
+
+  async searchUsersByName(nameSubstring: string): Promise<User[]> {
+  
+    try {
+      const users = await this.userRepository
+        .createQueryBuilder('user')
+        .where('LOWER(user.name) LIKE LOWER(:nameSubstring)', {
+          nameSubstring: `%${nameSubstring}%`,
+        })
+        .getMany();
+
+      return users;
+    } catch (error) {
+      console.error('Error during user search operation:', error);
+      throw new InternalServerErrorException(ERROR_MESSAGES.UNEXPECTED_ERROR);
+    }
+  }
 }

@@ -27,7 +27,7 @@ async function bootstrap() {
   // Set global prefix and versioning
   app.setGlobalPrefix('api');
   app.enableVersioning({ type: VersioningType.URI });
-
+  app.enableCors();
   // Start the application
   await app.listen(port);
   console.log(`HTTP server running on http://localhost:${port}`);

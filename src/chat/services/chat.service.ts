@@ -91,7 +91,7 @@ export class ChatService {
       return this.responseService.success(
         `message successfully fetch on  ${page}`,
         200,
-        history,
+        history.messages,
       );
     } catch (error) {
       return this.responseService.error(`error fetching message`);

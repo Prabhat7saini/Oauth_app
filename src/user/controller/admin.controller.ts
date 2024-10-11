@@ -91,8 +91,8 @@ export class AdminController {
    * data Contains the ID of the user to be retrieved.
    * @ An ApiResponse containing the user details.
    */
-  @Roles('admin')
-  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  // @Roles('admin')
+  @UseGuards(AuthenticationGuard)
   @Get(`/:id/getUser`)
   async getUser(@Param() data: { id: string }): Promise<ApiResponse> {
     const id = data.id;

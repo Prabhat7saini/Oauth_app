@@ -41,6 +41,7 @@ export const ERROR_MESSAGES = {
     'Something went wrong while sending reset pwd mail',
   RESET_TOKEN_EXPIRED: 'token expired',
   RESETPASSWORD_FAILD: 'Reset password failed',
+
 };
 
 export const SUCCESS_MESSAGES = {
@@ -61,4 +62,5 @@ export const SUCCESS_MESSAGES = {
   PERMISSION_DELETED_SUCCESSFULLY: 'Permission successfully deleted',
   RESET_PASSWORD_TOKEN_GENERATED:
     '`Email sent successfully,Please check email and changes password`',
+  USER_SEARCHED: 'Users searched successfully',
 };

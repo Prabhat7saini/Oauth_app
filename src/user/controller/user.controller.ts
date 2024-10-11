@@ -2,7 +2,9 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Patch,
+  Post,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -12,9 +14,9 @@ import { ApiResponse } from 'src/utils/responses/api-response.dto';
 import { UpdateUserDto } from '../dto/userDto';
 import { AuthenticationGuard } from 'src/auth/guard/authenticaton.guard';
 
-@Controller()
+@Controller({ path: 'user', version: '1' })
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) { }
 
   @UseGuards(AuthenticationGuard)
   @Patch(`update-user`)
@@ -29,5 +31,15 @@ export class UserController {
   @Delete('delete')
   async deleteUser(@Req() req: CustomRequest): Promise<ApiResponse> {
     return this.userService.softDeleteUser(req);
+  }
+
+  @UseGuards(AuthenticationGuard)
+  @Post('searchUser')
+  async searchUsers(@Body() body: { query: string }): Promise<ApiResponse> {
+    const { query } = body; // Extract the query from the request body
+    console.log(query,`searchUsers`);
+    const users = await this.userService.searchUsersByName(query); // Update the service method call
+
+    return users;
   }
 }

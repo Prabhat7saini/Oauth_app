@@ -109,4 +109,16 @@ export class UserService {
       return this.responseService.error(ERROR_MESSAGES.USER_UPDATE_FAILED);
     }
   }
+
+  async searchUsersByName(name: string): Promise<ApiResponse>{
+    try {
+      if(!name) return this.responseService.error(`User ${name} not found`)
+
+        const users = await this.userRepository.searchUsersByName(name);
+        return this.responseService.success(SUCCESS_MESSAGES.USER_SEARCHED, 200, users);
+      
+    } catch (error) {
+      
+    }
+  }
 }
